@@ -2,33 +2,10 @@ window.onhashchange = ()=>window.location.reload();
 
 Highcharts.setOptions({global: {useUTC: false}});
 
-const stream = new EventSource('/stream');
+let stream;
+let fetchInterval;
 
-stream.onmessage = (e)=>{
-  let data = JSON.parse(e.data);
-
-  if (data.appId !== window.location.hash.slice(1)) return;
-
-  let match = false;
-  chart.series.forEach((graph)=>{
-    if (graph.name === data.name) {
-        graph.addPoint([Number(data.x), Number(data.y)]);
-        match = true;
-    }
-  });
-  if (match) return;
-  chart.addSeries({
-    name: data.name,
-    data: [[Number(data.x), Number(data.y)]],
-  });
-};
-
-stream.onerror = (e)=>{
-  console.log(e);
-  fetchData(true);
-}
-
-async function fetchData(single) {
+async function fetchData() {
   if (!window.location.hash) window.location.hash = '#default';
   let {title, data} = await fetch('/data/'+window.location.hash.slice(1))
   .then((txt)=>txt.json())
@@ -64,15 +41,15 @@ async function fetchData(single) {
     });
   });
 
-  if (!single) setTimeout(fetchData, 10*60*1000);
+  console.log('New data fetched.');
 }
 
 const chart = Highcharts.chart('container', {
   chart: {
     events: {
       load: ()=>{
-        console.log('Chart loaded!');
-        fetchData();
+        console.log('Chart loaded.');
+        setupStream();
       },
     },
     zoomType: 'x',
@@ -106,3 +83,46 @@ const chart = Highcharts.chart('container', {
   series: [],
 
 });
+
+function setupStream() {
+  console.log('Connecting to stream.');
+  stream = new EventSource('/stream');
+  fetchData();
+  
+  stream.onopen = (e)=>{
+    console.log('Stream connected.');
+    window.clearInterval(fetchInterval);
+    fetchInterval = window.setInterval(fetchData, 2*60*1000);
+  }
+  
+  stream.onmessage = (e)=>{
+    console.log("backoff, stream still connected.");
+    window.clearInterval(fetchInterval);
+    fetchInterval = window.setInterval(fetchData, 2*60*1000);
+
+    let data = JSON.parse(e.data);
+
+    if (data.appId !== window.location.hash.slice(1)) return;
+
+    console.log('New data streamed.');
+
+    let match = false;
+    chart.series.forEach((graph)=>{
+      if (graph.name === data.name) {
+        graph.addPoint([Number(data.x), Number(data.y)]);
+        match = true;
+      }
+    });
+    if (match) return;
+    chart.addSeries({
+      name: data.name,
+      data: [[Number(data.x), Number(data.y)]],
+    });
+  };
+
+  stream.onerror = (e)=>{
+    console.log(e);
+    fetchData();
+    window.setTimeout(setupStream, 10*1000);
+  }
+}

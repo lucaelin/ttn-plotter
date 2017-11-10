@@ -22,7 +22,7 @@ app.get('/', (req, res)=>{
 
 app.get('/stream', sse.init);
 setInterval(()=>{
-  sse.send({addId: ''}, 'keepalive');
+  sse.send({appId: ''});
 }, 60*1000);
 
 app.get('/data/:set', (req, res)=>{
@@ -30,9 +30,11 @@ app.get('/data/:set', (req, res)=>{
 });
 
 app.post('/hook', (req, res)=>{
-  let evt = hook(req.body);
-  addPoint(evt.addId, evt.name, evt.x, evt.y);
-  sse.send(evt);
+  let evts = hook(req.body);
+  evts.forEach((e)=>{
+    addPoint(e.appId, e.name, e.x, e.y);
+    sse.send(e);
+  });
 
   res.send('OK');
 });
