@@ -12,7 +12,6 @@
     "body-parser": "^1.18.2",
     "express": "^4.16.2",
     "express-sse": "^0.4.1",
-    "ttn": "^2.2.8",
     "varint": "^5.0.0"
   }
 }

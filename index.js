@@ -1,12 +1,9 @@
-// const ttn = require('ttn');
 const express = require('express');
 const app = express();
 const bodyParser = require('body-parser');
 const SSE = require('express-sse');
 const {addPoint, getData} = require('./data.js');
 const hook = require('./hook.js');
-
-// const config = require('./config.json');-
 
 const sse = new SSE();
 
