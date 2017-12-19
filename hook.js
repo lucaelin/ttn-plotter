@@ -1,7 +1,7 @@
 module.exports = (body)=>{
   if (Object.keys(body.payload_fields||{}).length) {
     return Object.keys(body.payload_fields).map((i)=>{
-      let name = body.dev_id + i;
+      let name = body.dev_id + " " + i;
 
       let x = new Date(body.metadata.time).getTime();
       let y = body.payload_fields[i];

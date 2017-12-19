@@ -38,6 +38,7 @@ async function fetchData() {
     chart.addSeries({
       name: name,
       data: Object.keys(data[name]).map((key)=>[Number(key), Number(data[name][key])]),
+      visible: !name.includes(" _"),
     });
   });
 
@@ -117,6 +118,7 @@ function setupStream() {
     chart.addSeries({
       name: data.name,
       data: [[Number(data.x), Number(data.y)]],
+      visible: !data.name.includes(" _"),
     });
   };
 
